@@ -1,0 +1,36 @@
+# Build artifacts
+target/
+dist/
+build/
+*.class
+*.jar
+
+# Dependencies
+node_modules/
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rust
+risk-engine/target/
+
+# Go
+risk-service/server
+
+# C++
+clearing-service/build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# PHP
+*.log

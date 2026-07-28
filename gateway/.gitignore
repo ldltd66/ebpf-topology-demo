@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.js.map
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
+coverage/
+.nyc_output/

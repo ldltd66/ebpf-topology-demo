@@ -1,0 +1,30 @@
+# Build output
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Maven
+.mvn/wrapper/
+mvnw
+mvnw.cmd
+
+# Generated sources
+src/main/java/com/example/trade/grpc/

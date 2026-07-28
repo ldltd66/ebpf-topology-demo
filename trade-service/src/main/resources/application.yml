@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: trade-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+logging:
+  level:
+    com.example.trade: INFO
+    root: INFO
+
+# gRPC client config for grpc-client-spring-boot-starter
+grpc:
+  client:
+    risk-service:
+      address: 'static://${RISK_SERVICE_GRPC:risk-service:50051}'
+      enable-keep-alive: true
+      keep-alive-without-calls: true
+      negotiation-type: PLAINTEXT
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

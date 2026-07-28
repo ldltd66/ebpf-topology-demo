@@ -1,0 +1,25 @@
+# Dependencies
+/vendor/
+composer.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Runtime
+/tmp/
+*.tmp
+
+# Environment
+.env
+.env.local

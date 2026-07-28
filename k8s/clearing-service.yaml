@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clearing-service
+  namespace: ebpf-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clearing-service
+  template:
+    metadata:
+      labels:
+        app: clearing-service
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: app
+          image: crpi-ievhl527wmnxwc88.cn-beijing.personal.cr.aliyuncs.com/ldltd/ebpf-clearing-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TRADE_CALLBACK_URL
+              value: "http://trade-service:8080/api/trade/callback"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clearing-service
+  namespace: ebpf-demo
+spec:
+  selector:
+    app: clearing-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+      appProtocol: http

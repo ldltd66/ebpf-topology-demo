@@ -1,0 +1,199 @@
+name: Build and Deploy eBPF Topology Demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'gateway/**'
+      - 'trade-service/**'
+      - 'risk-service/**'
+      - 'clearing-service/**'
+      - 'risk-engine/**'
+      - 'audit-service/**'
+      - 'archive-service/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      gateway: ${{ steps.changes.outputs.gateway }}
+      trade-service: ${{ steps.changes.outputs.trade-service }}
+      risk-service: ${{ steps.changes.outputs.risk-service }}
+      clearing-service: ${{ steps.changes.outputs.clearing-service }}
+      risk-engine: ${{ steps.changes.outputs.risk-engine }}
+      audit-service: ${{ steps.changes.outputs.audit-service }}
+      archive-service: ${{ steps.changes.outputs.archive-service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            gateway:
+              - 'gateway/**'
+            trade-service:
+              - 'trade-service/**'
+            risk-service:
+              - 'risk-service/**'
+            clearing-service:
+              - 'clearing-service/**'
+            risk-engine:
+              - 'risk-engine/**'
+            audit-service:
+              - 'audit-service/**'
+            archive-service:
+              - 'archive-service/**'
+
+  build-gateway:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.gateway == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:latest \
+                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:${{ github.sha }} \
+                       ./gateway
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:latest
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:${{ github.sha }}
+
+  build-trade-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.trade-service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:latest \
+                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:${{ github.sha }} \
+                       ./trade-service
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:latest
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:${{ github.sha }}
+
+  build-risk-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.risk-service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:latest \
+                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:${{ github.sha }} \
+                       ./risk-service
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:latest
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:${{ github.sha }}
+
+  build-clearing-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.clearing-service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:latest \
+                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:${{ github.sha }} \
+                       ./clearing-service
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:latest
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:${{ github.sha }}
+
+  build-risk-engine:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.risk-engine == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:latest \
+                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:${{ github.sha }} \
+                       ./risk-engine
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:latest
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:${{ github.sha }}
+
+  build-audit-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.audit-service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:latest \
+                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:${{ github.sha }} \
+                       ./audit-service
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:latest
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:${{ github.sha }}
+
+  build-archive-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.archive-service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:latest \
+                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:${{ github.sha }} \
+                       ./archive-service
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:latest
+          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:${{ github.sha }}
+
+  deploy:
+    needs: [build-gateway, build-trade-service, build-risk-service, build-clearing-service, build-risk-engine, build-audit-service, build-archive-service]
+    if: always() && !cancelled()
+    runs-on: self-hosted
+    env:
+      KUBECONFIG: /home/gh-runner/.kube/config
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create acr-secret
+        run: |
+          kubectl create secret docker-registry acr-secret \
+            --namespace=ebpf-demo \
+            --docker-server=${{ secrets.ACR_REGISTRY }} \
+            --docker-username=${{ secrets.ACR_USERNAME }} \
+            --docker-password=${{ secrets.ACR_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy namespace
+        run: kubectl apply -f k8s/namespace.yaml
+
+      - name: Deploy all services
+        run: |
+          for f in k8s/gateway.yaml k8s/trade-service.yaml k8s/risk-service.yaml \
+                   k8s/clearing-service.yaml k8s/risk-engine.yaml \
+                   k8s/audit-service.yaml k8s/archive-service.yaml; do
+            echo "Deploying $f..."
+            kubectl apply -f "$f"
+          done
+
+      - name: Wait for rollout
+        run: |
+          for svc in gateway trade-service risk-service clearing-service risk-engine audit-service archive-service; do
+            echo "Waiting for $svc..."
+            kubectl rollout status deployment/$svc -n ebpf-demo --timeout=180s || true
+          done
+
+      - name: Clean up images
+        run: sudo crictl rmi --prune 2>/dev/null || true

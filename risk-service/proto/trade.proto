@@ -1,0 +1,17 @@
+syntax = "proto3";
+package trade;
+option go_package = "github.com/ldltd66/ebpf-topology-demo/risk-service/proto";
+
+service RiskCheck {
+  rpc CheckRisk (RiskRequest) returns (RiskResponse);
+}
+message RiskRequest {
+  string request_id = 1;
+  double amount = 2;
+  map<string, string> headers = 3;
+}
+message RiskResponse {
+  bool approved = 1;
+  string message = 2;
+  string service = 3;
+}
