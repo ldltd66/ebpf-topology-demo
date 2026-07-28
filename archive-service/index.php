@@ -28,7 +28,7 @@ function jsonResponse(int $statusCode, array $body): void
 /**
  * Retrieve all request headers (works with PHP built-in server).
  */
-function getAllHeaders(): array
+function getIncomingHeaders(): array
 {
     $headers = [];
     foreach ($_SERVER as $key => $value) {
@@ -96,7 +96,7 @@ function saveCounters(array $counters): void
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $path   = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-$headers = getAllHeaders();
+$headers = getIncomingHeaders();
 
 // --- GET /health ---
 if ($method === 'GET' && $path === '/health') {
