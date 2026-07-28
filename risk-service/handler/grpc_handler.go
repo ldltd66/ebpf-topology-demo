@@ -14,7 +14,6 @@ import (
 
 	"github.com/ldltd66/ebpf-topology-demo/risk-service/proto"
 	"google.golang.org/grpc/metadata"
-	gproto "google.golang.org/protobuf/proto"
 )
 
 // RiskCheckHandler implements proto.RiskCheckServer.
@@ -161,6 +160,3 @@ func isForbiddenHeader(name string) bool {
 
 // Ensure the handler satisfies the interface at compile time.
 var _ proto.RiskCheckServer = (*RiskCheckHandler)(nil)
-
-// Silence unused import warnings.
-var _ = gproto.Marshal
