@@ -27,6 +27,11 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://grafana-k8s-monitoring-alloy-receiver.monitoring.svc.cluster.local:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "clearing-service"
+
           readinessProbe:
             httpGet:
               path: /health
