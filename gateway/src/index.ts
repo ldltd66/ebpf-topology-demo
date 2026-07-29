@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import axios, { AxiosError } from "axios";
 import { v4 as uuidv4 } from "uuid";
+import { randomBytes } from "crypto";
 
 const app = express();
 app.use(express.json());
@@ -86,6 +87,14 @@ app.post("/api/trade", async (req: Request, res: Response) => {
   );
   // Ensure x-request-id is always present in forwarded headers
   forwardHeaders["x-request-id"] = rid;
+
+  // Generate W3C Trace Context traceparent if not present
+  // Format: 00-{trace-id:32hex}-{parent-id:16hex}-{flags:01}
+  if (!forwardHeaders["traceparent"]) {
+    const traceId = randomBytes(16).toString("hex");   // 32 hex chars
+    const spanId = randomBytes(8).toString("hex");      // 16 hex chars
+    forwardHeaders["traceparent"] = `00-${traceId}-${spanId}-01`;
+  }
 
   const downstreamUrl = `${TRADE_SERVICE_URL}/api/trade`;
 
