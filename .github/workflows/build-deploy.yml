@@ -56,10 +56,8 @@ jobs:
         run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
       - name: Build and push
         run: |
-          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:latest \
-                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:${{ github.sha }} \
-                       ./gateway
-          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:latest
+          # 只打 SHA tag，不再推 :latest（:latest 会在节点残留，被旧 RS 引用后 prune 删不掉）
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:${{ github.sha }} ./gateway
           docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-gateway:${{ github.sha }}
 
   build-trade-service:
@@ -72,10 +70,7 @@ jobs:
         run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
       - name: Build and push
         run: |
-          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:latest \
-                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:${{ github.sha }} \
-                       ./trade-service
-          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:latest
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:${{ github.sha }} ./trade-service
           docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-trade-service:${{ github.sha }}
 
   build-risk-service:
@@ -88,10 +83,7 @@ jobs:
         run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
       - name: Build and push
         run: |
-          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:latest \
-                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:${{ github.sha }} \
-                       ./risk-service
-          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:latest
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:${{ github.sha }} ./risk-service
           docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-service:${{ github.sha }}
 
   build-clearing-service:
@@ -104,10 +96,7 @@ jobs:
         run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
       - name: Build and push
         run: |
-          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:latest \
-                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:${{ github.sha }} \
-                       ./clearing-service
-          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:latest
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:${{ github.sha }} ./clearing-service
           docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-clearing-service:${{ github.sha }}
 
   build-risk-engine:
@@ -120,10 +109,7 @@ jobs:
         run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
       - name: Build and push
         run: |
-          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:latest \
-                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:${{ github.sha }} \
-                       ./risk-engine
-          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:latest
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:${{ github.sha }} ./risk-engine
           docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-risk-engine:${{ github.sha }}
 
   build-audit-service:
@@ -136,10 +122,7 @@ jobs:
         run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
       - name: Build and push
         run: |
-          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:latest \
-                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:${{ github.sha }} \
-                       ./audit-service
-          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:latest
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:${{ github.sha }} ./audit-service
           docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-audit-service:${{ github.sha }}
 
   build-archive-service:
@@ -152,10 +135,7 @@ jobs:
         run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
       - name: Build and push
         run: |
-          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:latest \
-                       -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:${{ github.sha }} \
-                       ./archive-service
-          docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:latest
+          docker build -t ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:${{ github.sha }} ./archive-service
           docker push ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/ebpf-archive-service:${{ github.sha }}
 
   deploy:
@@ -164,6 +144,14 @@ jobs:
     runs-on: self-hosted
     env:
       KUBECONFIG: /home/gh-runner/.kube/config
+      # detect-changes outputs 通过 env 传入，shell 里判断是否更新镜像（只更新本次有构建的）
+      GATEWAY_CHANGED: ${{ needs.detect-changes.outputs.gateway }}
+      TRADE_SERVICE_CHANGED: ${{ needs.detect-changes.outputs.trade-service }}
+      RISK_SERVICE_CHANGED: ${{ needs.detect-changes.outputs.risk-service }}
+      CLEARING_SERVICE_CHANGED: ${{ needs.detect-changes.outputs.clearing-service }}
+      RISK_ENGINE_CHANGED: ${{ needs.detect-changes.outputs.risk-engine }}
+      AUDIT_SERVICE_CHANGED: ${{ needs.detect-changes.outputs.audit-service }}
+      ARCHIVE_SERVICE_CHANGED: ${{ needs.detect-changes.outputs.archive-service }}
     steps:
       - uses: actions/checkout@v4
 
@@ -188,6 +176,31 @@ jobs:
             kubectl apply -f "$f"
           done
 
+      - name: Update images to commit SHA
+        run: |
+          # 用本次 commit SHA 覆盖 yaml 里的 digest 占位，确保每次部署拉到新镜像
+          # 只更新本次有构建的镜像（避免给未构建的镜像 set 不存在的 SHA tag）
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          SHA=${{ github.sha }}
+
+          # 服务名 -> 是否本次构建 (env 变量名 = 服务名大写连字符转下划线 + _CHANGED)
+          update_if_changed() {
+            local svc=$1
+            local env_name=$(echo "$svc" | tr '[:lower:]-' '[:upper:]_')_CHANGED
+            local changed="${!env_name}"
+            if [ "$changed" = "true" ]; then
+              echo "  $svc: 本次有构建，set image -> :$SHA"
+              kubectl set image deployment/$svc -n ebpf-demo \
+                app=$REGISTRY/ebpf-$svc:$SHA
+            else
+              echo "  $svc: 本次无构建，跳过"
+            fi
+          }
+
+          for svc in gateway trade-service risk-service clearing-service risk-engine audit-service archive-service; do
+            update_if_changed "$svc"
+          done
+
       - name: Wait for rollout
         run: |
           for svc in gateway trade-service risk-service clearing-service risk-engine audit-service archive-service; do
@@ -195,5 +208,5 @@ jobs:
             kubectl rollout status deployment/$svc -n ebpf-demo --timeout=180s || true
           done
 
-      - name: Clean up images
-        run: sudo crictl rmi --prune 2>/dev/null || true
+  # 镜像清理不在 CI 里做，由两节点各自的 cron 执行 /opt/scripts/prune-images.sh
+  # （每天 3:17 清理本机 docker + k3s containerd 未使用镜像，见 k3s 笔记坑9.5）

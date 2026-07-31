@@ -5,6 +5,7 @@ metadata:
   namespace: ebpf-demo
 spec:
   replicas: 2
+  revisionHistoryLimit: 1  # 只保留 1 个历史 RS，避免旧 RS 引用旧镜像导致 prune 删不掉
   selector:
     matchLabels:
       app: risk-service
@@ -17,7 +18,7 @@ spec:
         - name: acr-secret
       containers:
         - name: app
-          image: crpi-ievhl527wmnxwc88.cn-beijing.personal.cr.aliyuncs.com/ldltd/ebpf-risk-service:latest
+          image: crpi-ievhl527wmnxwc88.cn-beijing.personal.cr.aliyuncs.com/ldltd/ebpf-risk-service@sha256:a9094a7ea55c72c357d779526d5ca6676224fc69c935cc580f706c405049b7bc  # CI 用 kubectl set image 覆盖为 SHA tag
           ports:
             - containerPort: 8080
             - containerPort: 50051
