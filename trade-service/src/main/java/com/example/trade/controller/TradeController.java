@@ -127,7 +127,7 @@ public class TradeController {
         // Step 2: Wait for callback from clearing-service
         CompletableFuture<Map<String, Object>> callbackFuture = CallbackController.registerCallback(requestId);
         try {
-            Map<String, Object> callbackResult = callbackFuture.get(10, TimeUnit.SECONDS);
+            Map<String, Object> callbackResult = callbackFuture.get(2, TimeUnit.SECONDS);
             results.put("clearing-service", callbackResult);
         } catch (TimeoutException e) {
             log.warn("Callback timeout for requestId={}", requestId);
@@ -135,7 +135,7 @@ public class TradeController {
             Map<String, Object> timeoutResult = new LinkedHashMap<>();
             timeoutResult.put("service", "clearing-service");
             timeoutResult.put("status", "timeout");
-            timeoutResult.put("message", "Callback not received within 10 seconds");
+            timeoutResult.put("message", "Callback not received within 2 seconds");
             results.put("clearing-service", timeoutResult);
         } catch (Exception e) {
             log.error("Callback error for requestId={}: {}", requestId, e.getMessage());
