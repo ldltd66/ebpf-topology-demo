@@ -1,0 +1,142 @@
+name: Build and Deploy Legacy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/Dockerfile.legacy'
+      - '**/*-legacy.*'
+      - 'k8s-legacy/**'
+      - '.github/workflows/build-deploy-legacy.yml'
+  workflow_dispatch:
+
+jobs:
+  build-gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          docker build -f gateway/Dockerfile.legacy -t $REGISTRY/ebpf-gateway-legacy:${{ github.sha }} ./gateway
+          docker push $REGISTRY/ebpf-gateway-legacy:${{ github.sha }}
+
+  build-trade-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          docker build -f trade-service/Dockerfile.legacy -t $REGISTRY/ebpf-trade-service-legacy:${{ github.sha }} ./trade-service
+          docker push $REGISTRY/ebpf-trade-service-legacy:${{ github.sha }}
+
+  build-risk-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          docker build -f risk-service/Dockerfile.legacy -t $REGISTRY/ebpf-risk-service-legacy:${{ github.sha }} ./risk-service
+          docker push $REGISTRY/ebpf-risk-service-legacy:${{ github.sha }}
+
+  build-clearing-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          docker build -f clearing-service/Dockerfile.legacy -t $REGISTRY/ebpf-clearing-service-legacy:${{ github.sha }} ./clearing-service
+          docker push $REGISTRY/ebpf-clearing-service-legacy:${{ github.sha }}
+
+  build-risk-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          docker build -f risk-engine/Dockerfile.legacy -t $REGISTRY/ebpf-risk-engine-legacy:${{ github.sha }} ./risk-engine
+          docker push $REGISTRY/ebpf-risk-engine-legacy:${{ github.sha }}
+
+  build-audit-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          docker build -f audit-service/Dockerfile.legacy -t $REGISTRY/ebpf-audit-service-legacy:${{ github.sha }} ./audit-service
+          docker push $REGISTRY/ebpf-audit-service-legacy:${{ github.sha }}
+
+  build-archive-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to ACR
+        run: docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+      - name: Build and push
+        run: |
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          docker build -f archive-service/Dockerfile.legacy -t $REGISTRY/ebpf-archive-service-legacy:${{ github.sha }} ./archive-service
+          docker push $REGISTRY/ebpf-archive-service-legacy:${{ github.sha }}
+
+  deploy:
+    needs: [build-gateway, build-trade-service, build-risk-service, build-clearing-service, build-risk-engine, build-audit-service, build-archive-service]
+    runs-on: self-hosted
+    env:
+      KUBECONFIG: /home/gh-runner/.kube/config
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create acr-secret
+        run: |
+          kubectl create secret docker-registry acr-secret \
+            --namespace=ebpf-legacy \
+            --docker-server=${{ secrets.ACR_REGISTRY }} \
+            --docker-username=${{ secrets.ACR_USERNAME }} \
+            --docker-password=${{ secrets.ACR_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy namespace
+        run: kubectl apply -f k8s-legacy/namespace.yaml
+
+      - name: Deploy all services
+        run: |
+          for f in k8s-legacy/gateway.yaml k8s-legacy/trade-service.yaml k8s-legacy/risk-service.yaml \
+                   k8s-legacy/clearing-service.yaml k8s-legacy/risk-engine.yaml \
+                   k8s-legacy/audit-service.yaml k8s-legacy/archive-service.yaml; do
+            echo "Deploying $f..."
+            kubectl apply -f "$f"
+          done
+
+      - name: Update images to commit SHA
+        run: |
+          REGISTRY=${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}
+          SHA=${{ github.sha }}
+          for svc in gateway trade-service risk-service clearing-service risk-engine audit-service archive-service; do
+            echo "  $svc -> :$SHA"
+            kubectl set image deployment/$svc -n ebpf-legacy \
+              app=$REGISTRY/ebpf-$svc-legacy:$SHA
+          done
+
+      - name: Wait for rollout
+        run: |
+          for svc in gateway trade-service risk-service clearing-service risk-engine audit-service archive-service; do
+            echo "Waiting for $svc..."
+            kubectl rollout status deployment/$svc -n ebpf-legacy --timeout=180s || true
+          done

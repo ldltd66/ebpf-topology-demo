@@ -1,0 +1,17 @@
+FROM node:14-buster AS builder
+WORKDIR /app
+COPY package.json ./
+RUN npm install --legacy-peer-deps
+COPY src/ ./src/
+COPY tsconfig.json ./
+RUN npx tsc
+
+FROM debian:buster-slim
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs npm curl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=builder /app/dist/ ./dist/
+COPY --from=builder /app/node_modules/ ./node_modules/
+COPY --from=builder /app/package.json ./
+EXPOSE 8080
+HEALTHCHECK --interval=10s CMD curl -f http://localhost:8080/health || exit 1
+CMD ["node", "dist/index.js"]

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-engine
+  namespace: ebpf-legacy
+spec:
+  replicas: 2
+  revisionHistoryLimit: 1  # 只保留 1 个历史 RS，避免旧 RS 引用旧镜像导致 prune 删不掉
+  selector:
+    matchLabels:
+      app: risk-engine
+  template:
+    metadata:
+      labels:
+        app: risk-engine
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: app
+          image: crpi-ievhl527wmnxwc88.cn-beijing.personal.cr.aliyuncs.com/ldltd/ebpf-risk-engine-legacy:latest  # CI 用 kubectl set image 覆盖为 SHA tag
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TRADE_CALLBACK_URL
+              value: "http://trade-service:8080/api/trade/callback"
+            - name: RISK_SERVICE_GRPC
+              value: "http://risk-service:50051"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://grafana-k8s-monitoring-alloy-receiver.monitoring.svc.cluster.local:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "risk-engine-legacy"
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-engine
+  namespace: ebpf-legacy
+spec:
+  selector:
+    app: risk-engine
+  ports:
+    - port: 8080
+      targetPort: 8080
+      appProtocol: http

@@ -1,0 +1,6 @@
+FROM php:7.4-cli-buster
+WORKDIR /app
+COPY index-legacy.php ./index.php
+EXPOSE 8080
+HEALTHCHECK --interval=10s CMD curl -f http://localhost:8080/health || exit 1
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "/app"]

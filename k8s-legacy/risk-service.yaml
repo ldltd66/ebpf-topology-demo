@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-service
+  namespace: ebpf-legacy
+spec:
+  replicas: 2
+  revisionHistoryLimit: 1  # 只保留 1 个历史 RS，避免旧 RS 引用旧镜像导致 prune 删不掉
+  selector:
+    matchLabels:
+      app: risk-service
+  template:
+    metadata:
+      labels:
+        app: risk-service
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: app
+          image: crpi-ievhl527wmnxwc88.cn-beijing.personal.cr.aliyuncs.com/ldltd/ebpf-risk-service-legacy:latest  # CI 用 kubectl set image 覆盖为 SHA tag
+          ports:
+            - containerPort: 8080
+            - containerPort: 50051
+          env:
+            - name: CLEARING_SERVICE_URL
+              value: "http://clearing-service:8080"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://grafana-k8s-monitoring-alloy-receiver.monitoring.svc.cluster.local:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "risk-service-legacy"
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-service
+  namespace: ebpf-legacy
+spec:
+  selector:
+    app: risk-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      appProtocol: http
+    - name: grpc-trade
+      port: 50051
+      targetPort: 50051
+      appProtocol: grpc

@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trade-service
+  namespace: ebpf-legacy
+spec:
+  replicas: 2
+  revisionHistoryLimit: 1  # 只保留 1 个历史 RS，避免旧 RS 引用旧镜像导致 prune 删不掉
+  selector:
+    matchLabels:
+      app: trade-service
+  template:
+    metadata:
+      labels:
+        app: trade-service
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: app
+          image: crpi-ievhl527wmnxwc88.cn-beijing.personal.cr.aliyuncs.com/ldltd/ebpf-trade-service-legacy:latest  # CI 用 kubectl set image 覆盖为 SHA tag
+          ports:
+            - containerPort: 8080
+          env:
+            - name: RISK_SERVICE_GRPC
+              value: "risk-service:50051"
+            - name: RISK_SERVICE_URL
+              value: "http://risk-service:8080"
+            - name: RISK_ENGINE_URL
+              value: "http://risk-engine:8080"
+            - name: CLEARING_SERVICE_URL
+              value: "http://clearing-service:8080"
+            - name: AUDIT_SERVICE_URL
+              value: "http://audit-service:8080"
+            - name: ARCHIVE_SERVICE_URL
+              value: "http://archive-service:8080"
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://grafana-k8s-monitoring-alloy-receiver.monitoring.svc.cluster.local:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "trade-service-legacy"
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trade-service
+  namespace: ebpf-legacy
+spec:
+  selector:
+    app: trade-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+      appProtocol: http

@@ -1,0 +1,10 @@
+# ── Legacy build: Python 3.8 compatible ─────────────────────────────────────
+# Use this file instead of requirements.txt when targeting Python 3.8.
+# Key downgrades:
+#   fastapi  0.110.0 → 0.95.2   (last release supporting Python 3.8)
+#   uvicorn  0.27.1  → 0.22.0   (last release supporting Python 3.8)
+#   httpx    0.27.0  → 0.24.1   (last release supporting Python 3.8)
+
+fastapi==0.95.2
+uvicorn==0.22.0
+httpx==0.24.1

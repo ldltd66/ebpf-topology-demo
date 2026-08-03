@@ -1,0 +1,18 @@
+FROM maven:3.8-openjdk-8 AS builder
+WORKDIR /app
+RUN mkdir -p /root/.m2 && echo '<?xml version="1.0" encoding="UTF-8"?><settings><mirrors><mirror><id>aliyun</id><mirrorOf>central</mirrorOf><url>https://maven.aliyun.com/repository/public</url></mirror></mirrors></settings>' > /root/.m2/settings.xml
+COPY pom-legacy.xml ./pom.xml
+COPY src-legacy/ ./src/
+COPY src/main/proto/ ./src/main/proto/
+COPY src/main/resources/ ./src/main/resources/
+RUN mvn dependency:go-offline -B
+RUN mvn package -DskipTests -B
+
+FROM openjdk:8-jre-slim
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+EXPOSE 8080
+HEALTHCHECK --interval=10s CMD curl -f http://localhost:8080/health || exit 1
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
+ENTRYPOINT ["java", "-jar", "app.jar"]
