@@ -18,7 +18,7 @@ spec:
         - name: acr-secret
       containers:
         - name: app
-          image: crpi-ievhl527wmnxwc88.cn-beijing.personal.cr.aliyuncs.com/ldltd/ebpf-audit-service@sha256:2c34a7db850ed2333e059dee2540ca3257777b231620a1cb647b4be0db192c16  # CI 用 kubectl set image 覆盖为 SHA tag
+          image: crpi-ievhl527wmnxwc88.cn-beijing.personal.cr.aliyuncs.com/ldltd/ebpf-audit-service:latest  # CI 用 kubectl set image 覆盖为 SHA tag
           ports:
             - containerPort: 8080
           env:
