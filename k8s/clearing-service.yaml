@@ -24,6 +24,10 @@ spec:
           env:
             - name: TRADE_CALLBACK_URL
               value: "http://trade-service:8080/api/trade/callback"
+            - name: AUDIT_SERVICE_URL
+              value: "http://audit-service:8080"
+            - name: ARCHIVE_SERVICE_URL
+              value: "http://archive-service:8080"
             - name: POD_NAME
               valueFrom:
                 fieldRef:

@@ -24,6 +24,8 @@ spec:
           env:
             - name: TRADE_CALLBACK_URL
               value: "http://trade-service:8080/api/trade/callback"
+            - name: RISK_SERVICE_GRPC
+              value: "http://risk-service:50051"
             - name: POD_NAME
               valueFrom:
                 fieldRef:

@@ -24,6 +24,8 @@ spec:
           env:
             - name: TRADE_SERVICE_URL
               value: "http://trade-service:8080"
+            - name: RISK_ENGINE_URL
+              value: "http://risk-engine:8080"
             - name: NODE_NAME
               valueFrom:
                 fieldRef:

@@ -30,6 +30,7 @@ func main() {
 	// --- HTTP server on port 8080 ---
 	r := gin.Default()
 	handler.RegisterHTTPHandlers(r)
+	handler.RegisterChainRoutes(r)
 
 	log.Println("[risk-service] HTTP server listening on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {

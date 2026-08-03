@@ -5,14 +5,23 @@ with exponential backoff retry logic.
 """
 
 import os
+import time
 import uuid
 import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
 import httpx
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("audit-service")
 
 # ---------------------------------------------------------------------------
 # App
@@ -174,3 +183,44 @@ async def audit(request: Request):
             "timestamp": ts,
         }
     )
+
+
+@app.post("/api/chain")
+async def chain():
+    start = time.time()
+    await asyncio.sleep(0.01)  # 10ms business logic
+    logger.info("audit-service /api/chain")
+
+    archive_url = os.getenv("ARCHIVE_SERVICE_URL", "http://archive-service:8080")
+
+    result = {}
+    try:
+        # Plain httpx call, NO header forwarding
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(f"{archive_url}/api/chain", json={}, timeout=30.0)
+            result = resp.json()
+    except Exception as e:
+        result = {"error": str(e)}
+
+    elapsed = int((time.time() - start) * 1000)
+    return {"service": "audit-service", "path": "chain", "downstream": result, "elapsed_ms": elapsed}
+
+
+@app.post("/api/concurrent")
+async def concurrent():
+    start = time.time()
+    await asyncio.sleep(0.01)  # 10ms
+    logger.info("audit-service /api/concurrent")
+
+    archive_url = os.getenv("ARCHIVE_SERVICE_URL", "http://archive-service:8080")
+
+    result = {}
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(f"{archive_url}/api/concurrent", json={}, timeout=30.0)
+            result = resp.json()
+    except Exception as e:
+        result = {"error": str(e)}
+
+    elapsed = int((time.time() - start) * 1000)
+    return {"service": "audit-service", "path": "concurrent", "downstream": result, "elapsed_ms": elapsed}

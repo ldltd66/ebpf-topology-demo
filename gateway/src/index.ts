@@ -7,6 +7,8 @@ app.use(express.json());
 const PORT = Number(process.env.PORT) || 8080;
 const TRADE_SERVICE_URL =
   process.env.TRADE_SERVICE_URL || "http://trade-service:8080";
+const RISK_ENGINE_URL =
+  process.env.RISK_ENGINE_URL || "http://risk-engine:8080";
 
 /**
  * Headers that must NEVER be forwarded to downstream services.
@@ -114,11 +116,45 @@ app.post("/api/trade", async (req: Request, res: Response) => {
   }
 });
 
+// ─── Path A: Sequential chain ───────────────────────────────────────────────
+
+app.post("/api/chain", async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${TRADE_SERVICE_URL}/api/chain`, {}, { timeout: 30000, validateStatus: () => true, responseType: "json" });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(502).json({ error: "chain failed", detail: (err as Error).message });
+  }
+});
+
+// ─── Path B: HTTP + gRPC mixed ──────────────────────────────────────────────
+
+app.post("/api/rpc", async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${RISK_ENGINE_URL}/api/rpc`, {}, { timeout: 30000, validateStatus: () => true, responseType: "json" });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(502).json({ error: "rpc failed", detail: (err as Error).message });
+  }
+});
+
+// ─── Path C: Concurrent fan-out ─────────────────────────────────────────────
+
+app.post("/api/concurrent", async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${TRADE_SERVICE_URL}/api/concurrent`, {}, { timeout: 30000, validateStatus: () => true, responseType: "json" });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(502).json({ error: "concurrent failed", detail: (err as Error).message });
+  }
+});
+
 // ─── Start server ────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
   console.log(`[gateway] listening on :${PORT}`);
   console.log(`[gateway] TRADE_SERVICE_URL=${TRADE_SERVICE_URL}`);
+  console.log(`[gateway] RISK_ENGINE_URL=${RISK_ENGINE_URL}`);
 });
 
 export default app;

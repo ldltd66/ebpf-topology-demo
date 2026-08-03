@@ -12,6 +12,15 @@ use std::sync::Arc;
 use tokio::time::{sleep, Duration};
 use tracing::{error, info};
 
+// ── Generated gRPC types (built from proto/trade.proto) ─────────────────────
+
+pub mod trade_proto {
+    tonic::include_proto!("trade");
+}
+
+use trade_proto::risk_check_client::RiskCheckClient;
+use trade_proto::SimpleRequest;
+
 // ── Request / Response types ────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
@@ -38,6 +47,14 @@ struct CallbackPayload {
 }
 
 #[derive(Debug, Serialize)]
+struct RpcCheckResponse {
+    service: String,
+    status: String,
+    elapsed_ms: i64,
+    grpc_target: String,
+}
+
+#[derive(Debug, Serialize)]
 struct HealthResponse {
     status: &'static str,
     service: &'static str,
@@ -49,6 +66,7 @@ struct HealthResponse {
 struct AppState {
     http_client: reqwest::Client,
     callback_url: String,
+    grpc_target: String,
 }
 
 // ── Headers that must NEVER be forwarded ────────────────────────────────────
@@ -174,6 +192,68 @@ async fn risk_check(
     (StatusCode::ACCEPTED, Json(resp))
 }
 
+/// Path B: synchronous gRPC call to risk-service's CheckRiskSimple RPC.
+/// NO header forwarding — pure gRPC path.
+async fn rpc_check(
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    let grpc_target = state.grpc_target.clone();
+    info!("rpc-check: calling gRPC target={}", grpc_target);
+
+    // Simulate small processing delay before the outbound call.
+    sleep(Duration::from_millis(10)).await;
+
+    // Create tonic gRPC client.
+    let mut client = match RiskCheckClient::connect(grpc_target.clone()).await {
+        Ok(c) => c,
+        Err(e) => {
+            error!("rpc-check: gRPC connect failed: {}", e);
+            return (
+                StatusCode::BAD_GATEWAY,
+                Json(serde_json::json!({
+                    "error": "gRPC connect failed",
+                    "details": e.to_string(),
+                    "grpc_target": grpc_target,
+                })),
+            );
+        }
+    };
+
+    let request = SimpleRequest {
+        tag: "path-b".to_string(),
+    };
+
+    match client.check_risk_simple(request).await {
+        Ok(response) => {
+            let msg = response.into_inner();
+            info!(
+                "rpc-check: gRPC response service={} status={} elapsed_ms={}",
+                msg.service, msg.status, msg.elapsed_ms
+            );
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "service": msg.service,
+                    "status": msg.status,
+                    "elapsed_ms": msg.elapsed_ms,
+                    "grpc_target": grpc_target,
+                })),
+            )
+        }
+        Err(e) => {
+            error!("rpc-check: gRPC call failed: {}", e);
+            (
+                StatusCode::BAD_GATEWAY,
+                Json(serde_json::json!({
+                    "error": "gRPC call failed",
+                    "details": e.to_string(),
+                    "grpc_target": grpc_target,
+                })),
+            )
+        }
+    }
+}
+
 // ── Entry point ─────────────────────────────────────────────────────────────
 
 #[tokio::main]
@@ -189,13 +269,18 @@ async fn main() {
     let callback_url = env::var("TRADE_CALLBACK_URL")
         .unwrap_or_else(|_| "http://trade-service:8080/api/trade/callback".to_string());
 
+    let grpc_target = env::var("RISK_SERVICE_GRPC")
+        .unwrap_or_else(|_| "http://risk-service:50051".to_string());
+
     let state = Arc::new(AppState {
         http_client: reqwest::Client::new(),
         callback_url,
+        grpc_target,
     });
 
     let app = Router::new()
         .route("/api/risk-check", post(risk_check))
+        .route("/api/rpc", post(rpc_check))
         .route("/health", get(health))
         .with_state(state);
 

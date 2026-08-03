@@ -6,8 +6,10 @@
  * deliberate 503 failure injection for retry testing.
  *
  * Endpoints:
- *   POST /api/archive  - Archive with retry test logic
- *   GET  /health       - Health check
+ *   POST /api/archive    - Archive with retry test logic
+ *   POST /api/chain      - Simple sleep + return (chain path terminal)
+ *   POST /api/concurrent - Simple sleep + return (concurrent path terminal)
+ *   GET  /health         - Health check
  */
 
 // ---------------------------------------------------------------------------
@@ -161,6 +163,30 @@ if ($method === 'POST' && $path === '/api/archive') {
         'status'     => 'unavailable',
         'attempt'    => $count,
         'timestamp'  => $now,
+    ]);
+}
+
+// --- POST /api/chain ---
+if ($method === 'POST' && $path === '/api/chain') {
+    $start = microtime(true);
+    usleep(10000); // 10ms
+    $elapsed = round((microtime(true) - $start) * 1000);
+    jsonResponse(200, [
+        'service' => 'archive-service',
+        'path' => 'chain',
+        'elapsed_ms' => $elapsed,
+    ]);
+}
+
+// --- POST /api/concurrent ---
+if ($method === 'POST' && $path === '/api/concurrent') {
+    $start = microtime(true);
+    usleep(10000); // 10ms
+    $elapsed = round((microtime(true) - $start) * 1000);
+    jsonResponse(200, [
+        'service' => 'archive-service',
+        'path' => 'concurrent',
+        'elapsed_ms' => $elapsed,
     ]);
 }
 

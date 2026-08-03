@@ -158,5 +158,32 @@ func isForbiddenHeader(name string) bool {
 	return forbidden[strings.ToLower(name)]
 }
 
+// CheckRiskSimple — Path B gRPC: risk → clearing (HTTP)
+func (h *RiskCheckHandler) CheckRiskSimple(ctx context.Context, req *proto.SimpleRequest) (*proto.SimpleResponse, error) {
+	start := time.Now()
+	time.Sleep(10 * time.Millisecond)
+	log.Printf("[%s] gRPC CheckRiskSimple tag=%s", time.Now().Format(time.RFC3339), req.Tag)
+
+	clearingURL := os.Getenv("CLEARING_SERVICE_URL")
+	if clearingURL == "" {
+		clearingURL = "http://clearing-service:8080"
+	}
+
+	// Call clearing-service /api/rpc with NO headers
+	resp, err := http.Post(clearingURL+"/api/rpc", "application/json", bytes.NewReader([]byte("{}")))
+	status := "ok"
+	if err != nil {
+		status = "error: " + err.Error()
+	} else {
+		resp.Body.Close()
+	}
+
+	return &proto.SimpleResponse{
+		Service:   "risk-service",
+		Status:    status,
+		ElapsedMs: time.Since(start).Milliseconds(),
+	}, nil
+}
+
 // Ensure the handler satisfies the interface at compile time.
 var _ proto.RiskCheckServer = (*RiskCheckHandler)(nil)

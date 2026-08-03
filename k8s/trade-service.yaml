@@ -24,8 +24,12 @@ spec:
           env:
             - name: RISK_SERVICE_GRPC
               value: "risk-service:50051"
+            - name: RISK_SERVICE_URL
+              value: "http://risk-service:8080"
             - name: RISK_ENGINE_URL
               value: "http://risk-engine:8080"
+            - name: CLEARING_SERVICE_URL
+              value: "http://clearing-service:8080"
             - name: AUDIT_SERVICE_URL
               value: "http://audit-service:8080"
             - name: ARCHIVE_SERVICE_URL

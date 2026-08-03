@@ -352,6 +352,97 @@ static HttpResponse handle_clear(const HttpRequest& req) {
     return resp;
 }
 
+static HttpResponse handle_chain(const HttpRequest& /*req*/) {
+    auto start = std::chrono::steady_clock::now();
+
+    // Simulate processing
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    // Resolve audit service URL
+    const char* env_url = std::getenv("AUDIT_SERVICE_URL");
+    std::string audit_url = env_url
+        ? env_url
+        : "http://audit-service:8080";
+    audit_url += "/api/chain";
+
+    // POST to audit-service with empty JSON body, no header forwarding
+    std::string cb_resp;
+    bool cb_ok = http_post(audit_url, "{}", {}, cb_resp);
+    log_msg(cb_ok
+        ? "chain: forwarded to audit-service"
+        : "chain: FAILED to forward to audit-service");
+
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start).count();
+
+    HttpResponse resp;
+    resp.status_code  = 200;
+    resp.status_text  = "OK";
+    resp.headers["Content-Type"] = "application/json";
+    resp.headers["Connection"]   = "close";
+    std::ostringstream oss;
+    oss << "{\"service\":\"clearing-service\",\"path\":\"chain\",\"elapsed_ms\":"
+        << elapsed << "}";
+    resp.body = oss.str();
+    return resp;
+}
+
+static HttpResponse handle_rpc(const HttpRequest& /*req*/) {
+    auto start = std::chrono::steady_clock::now();
+
+    // Simulate processing
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start).count();
+
+    HttpResponse resp;
+    resp.status_code  = 200;
+    resp.status_text  = "OK";
+    resp.headers["Content-Type"] = "application/json";
+    resp.headers["Connection"]   = "close";
+    std::ostringstream oss;
+    oss << "{\"service\":\"clearing-service\",\"path\":\"rpc\",\"elapsed_ms\":"
+        << elapsed << "}";
+    resp.body = oss.str();
+    return resp;
+}
+
+static HttpResponse handle_concurrent(const HttpRequest& /*req*/) {
+    auto start = std::chrono::steady_clock::now();
+
+    // Simulate processing
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    // Resolve archive service URL
+    const char* env_url = std::getenv("ARCHIVE_SERVICE_URL");
+    std::string archive_url = env_url
+        ? env_url
+        : "http://archive-service:8080";
+    archive_url += "/api/concurrent";
+
+    // POST to archive-service with empty JSON body, no header forwarding
+    std::string cb_resp;
+    bool cb_ok = http_post(archive_url, "{}", {}, cb_resp);
+    log_msg(cb_ok
+        ? "concurrent: forwarded to archive-service"
+        : "concurrent: FAILED to forward to archive-service");
+
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start).count();
+
+    HttpResponse resp;
+    resp.status_code  = 200;
+    resp.status_text  = "OK";
+    resp.headers["Content-Type"] = "application/json";
+    resp.headers["Connection"]   = "close";
+    std::ostringstream oss;
+    oss << "{\"service\":\"clearing-service\",\"path\":\"concurrent\",\"elapsed_ms\":"
+        << elapsed << "}";
+    resp.body = oss.str();
+    return resp;
+}
+
 // ---------------------------------------------------------------------------
 // Connection handler (runs in a detached thread per connection)
 // ---------------------------------------------------------------------------
@@ -416,6 +507,12 @@ static void handle_connection(int client_sock) {
         resp = handle_health();
     } else if (req.method == "POST" && req.path == "/api/clear") {
         resp = handle_clear(req);
+    } else if (req.method == "POST" && req.path == "/api/chain") {
+        resp = handle_chain(req);
+    } else if (req.method == "POST" && req.path == "/api/rpc") {
+        resp = handle_rpc(req);
+    } else if (req.method == "POST" && req.path == "/api/concurrent") {
+        resp = handle_concurrent(req);
     } else {
         resp.status_code  = 404;
         resp.status_text  = "Not Found";
