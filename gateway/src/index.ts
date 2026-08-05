@@ -151,9 +151,13 @@ app.post("/api/concurrent", async (_req: Request, res: Response) => {
 
 // ─── Path D: Clean fast flow (no timeout, no retry, no callback) ────────────
 
-app.post("/api/flow", async (_req: Request, res: Response) => {
+app.post("/api/flow", async (req: Request, res: Response) => {
   try {
-    const response = await axios.post(`${TRADE_SERVICE_URL}/api/flow`, {}, { timeout: 30000, validateStatus: () => true, responseType: "json" });
+    // Forward x-flow header for branch routing (not a tracing header)
+    const headers: Record<string, string> = {};
+    const flow = req.headers["x-flow"];
+    if (flow) headers["x-flow"] = Array.isArray(flow) ? flow[0] : flow;
+    const response = await axios.post(`${TRADE_SERVICE_URL}/api/flow`, {}, { timeout: 30000, validateStatus: () => true, responseType: "json", headers });
     res.status(response.status).json(response.data);
   } catch (err) {
     res.status(502).json({ error: "flow failed", detail: (err as Error).message });
