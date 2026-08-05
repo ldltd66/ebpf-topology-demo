@@ -1,5 +1,4 @@
-FROM rust:1.70-buster AS builder
-RUN sed -i 's|deb.debian.org|archive.debian.org|g; /security.debian.org/d' /etc/apt/sources.list || true
+FROM rust:1.72-bookworm AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY Cargo-legacy.toml ./Cargo.toml
@@ -7,9 +6,8 @@ COPY src/main-legacy.rs ./src/main.rs
 RUN cargo update -p syn --precise 2.0.106 2>/dev/null || true
 RUN cargo build --release
 
-FROM debian:buster-slim
-RUN sed -i 's|deb.debian.org|archive.debian.org|g; /security.debian.org/d' /etc/apt/sources.list || true
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=builder /app/target/release/risk-engine .
 EXPOSE 8080
