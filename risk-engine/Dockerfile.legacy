@@ -9,9 +9,24 @@ COPY proto/ ./proto/
 COPY src/main-legacy.rs ./src/main.rs
 # Generate lockfile with pinned deps, then lock transitive Rust 2024 deps to older versions
 RUN cargo generate-lockfile 2>/dev/null || true
+# Pin all transitive deps that require Rust edition 2024 (Rust 1.85+)
+# These come from reqwest/hyper/tonic dependency trees
 RUN cargo update -p idna_adapter --precise 1.1.0 2>/dev/null || true
 RUN cargo update -p home --precise 0.5.11 2>/dev/null || true
 RUN cargo update -p getrandom --precise 0.2.15 2>/dev/null || true
+RUN cargo update -p indexmap --precise 2.7.1 2>/dev/null || true
+RUN cargo update -p icu_normalizer --precise 1.2.0 2>/dev/null || true
+RUN cargo update -p icu_properties --precise 1.2.0 2>/dev/null || true
+RUN cargo update -p icu_collections --precise 1.5.0 2>/dev/null || true
+RUN cargo update -p icu_locid --precise 1.5.0 2>/dev/null || true
+RUN cargo update -p icu_provider --precise 1.5.0 2>/dev/null || true
+RUN cargo update -p litemap --precise 0.7.4 2>/dev/null || true
+RUN cargo update -p writeable --precise 0.5.5 2>/dev/null || true
+RUN cargo update -p yoke --precise 0.7.5 2>/dev/null || true
+RUN cargo update -p zerovec --precise 0.10.4 2>/dev/null || true
+RUN cargo update -p zerofrom --precise 0.1.5 2>/dev/null || true
+RUN cargo update -p tinystr --precise 0.7.6 2>/dev/null || true
+RUN cargo update -p potential_utf --precise 0.1.0 2>/dev/null || true
 RUN cargo build --release
 
 FROM debian:buster-slim
