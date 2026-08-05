@@ -206,6 +206,25 @@ async def chain():
     return {"service": "audit-service", "path": "chain", "downstream": result, "elapsed_ms": elapsed}
 
 
+@app.post("/api/flow")
+async def flow():
+    start = time.time()
+    await asyncio.sleep(0.01)  # 10ms
+    logger.info("audit-service /api/flow")
+
+    archive_url = os.getenv("ARCHIVE_SERVICE_URL", "http://archive-service:8080")
+    result = {}
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(f"{archive_url}/api/flow", json={}, timeout=30.0)
+            result = resp.json()
+    except Exception as e:
+        result = {"error": str(e)}
+
+    elapsed = int((time.time() - start) * 1000)
+    return {"service": "audit-service", "path": "flow", "downstream": result, "elapsed_ms": elapsed}
+
+
 @app.post("/api/concurrent")
 async def concurrent():
     start = time.time()

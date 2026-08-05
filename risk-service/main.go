@@ -31,6 +31,7 @@ func main() {
 	r := gin.Default()
 	handler.RegisterHTTPHandlers(r)
 	handler.RegisterChainRoutes(r)
+	handler.RegisterFlowRoutes(r)
 
 	log.Println("[risk-service] HTTP server listening on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {

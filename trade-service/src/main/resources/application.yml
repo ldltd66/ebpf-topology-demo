@@ -26,6 +26,7 @@ app:
   risk-service-url: ${RISK_SERVICE_URL:http://risk-service:8080}
   clearing-service-url: ${CLEARING_SERVICE_URL:http://clearing-service:8080}
   audit-service-url: ${AUDIT_SERVICE_URL:http://audit-service:8080}
+  risk-engine-url: ${RISK_ENGINE_URL:http://risk-engine:8080}
 
 management:
   endpoints:

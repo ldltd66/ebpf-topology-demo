@@ -408,6 +408,27 @@ static HttpResponse handle_rpc(const HttpRequest& /*req*/) {
     return resp;
 }
 
+static HttpResponse handle_flow(const HttpRequest& /*req*/) {
+    auto start = std::chrono::steady_clock::now();
+
+    // Simulate processing — terminal service for /api/flow (no downstream call)
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start).count();
+
+    HttpResponse resp;
+    resp.status_code  = 200;
+    resp.status_text  = "OK";
+    resp.headers["Content-Type"] = "application/json";
+    resp.headers["Connection"]   = "close";
+    std::ostringstream oss;
+    oss << "{\"service\":\"clearing-service\",\"path\":\"flow\",\"elapsed_ms\":"
+        << elapsed << "}";
+    resp.body = oss.str();
+    return resp;
+}
+
 static HttpResponse handle_concurrent(const HttpRequest& /*req*/) {
     auto start = std::chrono::steady_clock::now();
 
@@ -511,6 +532,8 @@ static void handle_connection(int client_sock) {
         resp = handle_chain(req);
     } else if (req.method == "POST" && req.path == "/api/rpc") {
         resp = handle_rpc(req);
+    } else if (req.method == "POST" && req.path == "/api/flow") {
+        resp = handle_flow(req);
     } else if (req.method == "POST" && req.path == "/api/concurrent") {
         resp = handle_concurrent(req);
     } else {

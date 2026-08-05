@@ -190,6 +190,18 @@ if ($method === 'POST' && $path === '/api/concurrent') {
     ]);
 }
 
+// --- POST /api/flow ---
+if ($method === 'POST' && $path === '/api/flow') {
+    $start = microtime(true);
+    usleep(10000); // 10ms
+    $elapsed = round((microtime(true) - $start) * 1000);
+    jsonResponse(200, [
+        'service' => 'archive-service',
+        'path' => 'flow',
+        'elapsed_ms' => $elapsed,
+    ]);
+}
+
 // --- 404 for everything else ---
 jsonResponse(404, [
     'error'   => 'not found',

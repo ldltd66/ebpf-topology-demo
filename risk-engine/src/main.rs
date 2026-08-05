@@ -121,6 +121,21 @@ fn collect_forwardable_headers(incoming: &HeaderMap) -> Vec<(String, String)> {
 
 // ── Handlers ────────────────────────────────────────────────────────────────
 
+async fn flow_handler() -> impl IntoResponse {
+    let start = std::time::Instant::now();
+    sleep(Duration::from_millis(10)).await;
+    let elapsed_ms = start.elapsed().as_millis() as i64;
+    info!("risk-engine /api/flow elapsed_ms={}", elapsed_ms);
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({
+            "service": "risk-engine",
+            "path": "flow",
+            "elapsed_ms": elapsed_ms,
+        })),
+    )
+}
+
 async fn health() -> impl IntoResponse {
     (StatusCode::OK, Json(HealthResponse {
         status: "ok",
@@ -281,6 +296,7 @@ async fn main() {
     let app = Router::new()
         .route("/api/risk-check", post(risk_check))
         .route("/api/rpc", post(rpc_check))
+        .route("/api/flow", post(flow_handler))
         .route("/health", get(health))
         .with_state(state);
 
