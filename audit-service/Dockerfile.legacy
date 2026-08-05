@@ -1,4 +1,5 @@
 FROM python:3.8-buster
+RUN sed -i 's|deb.debian.org|archive.debian.org|g; s|security.debian.org|archive.debian.org|g; s|buster/updates|buster|g' /etc/apt/sources.list 2>/dev/null || true
 WORKDIR /app
 COPY requirements-legacy.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
