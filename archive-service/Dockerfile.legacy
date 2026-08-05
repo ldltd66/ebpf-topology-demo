@@ -1,5 +1,5 @@
 FROM php:7.4-cli-buster
-RUN sed -i 's|deb.debian.org|archive.debian.org|g; s|security.debian.org|archive.debian.org|g; s|buster/updates|buster|g' /etc/apt/sources.list 2>/dev/null || true
+RUN sed -i 's|deb.debian.org|archive.debian.org|g; /security.debian.org/d' /etc/apt/sources.list || true
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY index-legacy.php ./index.php
