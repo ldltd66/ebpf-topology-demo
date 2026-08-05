@@ -24,8 +24,12 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tonic = "0.9"
 prost = "0.11"
 # Pin transitive deps that require Rust edition 2024 (Rust 1.85+)
+# These come from tonic/prost/hyper and need to be capped
 idna_adapter = "=1.1.0"
 home = "=0.5.11"
+getrandom = "=0.2.15"
+icu_normalizer = "=1.2.0"
+icu_properties = "=1.2.0"
 
 [build-dependencies]
 tonic-build = "0.9"

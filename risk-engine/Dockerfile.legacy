@@ -7,6 +7,11 @@ COPY Cargo.lock* ./
 COPY build.rs ./
 COPY proto/ ./proto/
 COPY src/main-legacy.rs ./src/main.rs
+# Generate lockfile with pinned deps, then lock transitive Rust 2024 deps to older versions
+RUN cargo generate-lockfile 2>/dev/null || true
+RUN cargo update -p idna_adapter --precise 1.1.0 2>/dev/null || true
+RUN cargo update -p home --precise 0.5.11 2>/dev/null || true
+RUN cargo update -p getrandom --precise 0.2.15 2>/dev/null || true
 RUN cargo build --release
 
 FROM debian:buster-slim
