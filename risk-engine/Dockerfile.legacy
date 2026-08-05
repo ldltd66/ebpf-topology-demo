@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compil
 WORKDIR /app
 COPY Cargo-legacy.toml ./Cargo.toml
 COPY src/main-legacy.rs ./src/main.rs
+RUN cargo update -p syn --precise 2.0.106 2>/dev/null || true
 RUN cargo build --release
 
 FROM debian:buster-slim
